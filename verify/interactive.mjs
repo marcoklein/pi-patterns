@@ -68,10 +68,12 @@ try {
   await run("A: subagent-question human loop", async () => {
     const agentDir = makeAgentDir(creds, join(tmp, "A"));
     const q = join(patterns, "subagent-question");
+    const workA = join(tmp, "A-work");
+    mkdirSync(workA, { recursive: true });
     symlinkForce(q, join(agentDir, "extensions", "subagent-question"));
     for (const n of ["asker", "delegator"]) symlinkForce(join(q, ".pi", "agents", `${n}.md`), join(agentDir, "agents", `${n}.md`));
 
-    const driver = new RpcDriver({ cwd: q, env: cleanEnv(agentDir), args: modelArgs }).start();
+    const driver = new RpcDriver({ cwd: workA, env: cleanEnv(agentDir), args: modelArgs }).start();
     try {
       // A1 — deterministic: ask_user dialog appears at depth 0 and the answer
       // flows back through the tool.
