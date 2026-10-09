@@ -6,6 +6,8 @@ What was actually run, what came out, and what is still a manual check.
 
 **Method** — every test ran headless (`pi --no-session -p --mode json …`) inside a *clean* `PI_CODING_AGENT_DIR` (a temp dir containing only symlinked `auth.json`, `models-store.json`, `settings.json`, `trust.json`), set up with `./install.sh` exactly as the READMEs instruct. Nothing was pre-installed at user scope. Outputs below are quoted from the JSON event stream (`toolResult` text and the child transcripts in `details.results[].messages`).
 
+After committing, rows 1 and 4–5 were re-run from a **fresh `git clone`** with a fresh temp agent dir, to prove the pushed state is self-sufficient: `install.sh` resolved pi's bundled extension, and the chain returned `orchestrator received: delegator received: hello`.
+
 Model output is not deterministic: wording varies between runs, the *structure* (which agent ran, which refusal fired, which artifact appeared) is what is being asserted.
 
 ## Results
