@@ -30,11 +30,20 @@ Model output is not deterministic: wording varies between runs, the *structure* 
 | 14 | `subagent-question` | `ask_user` headless | ✅ `Error: ask_user needs an interactive session (no UI available).` (as its Caveats state) |
 | 15 | `subagent-question` | own extension as a symlinked dir | ✅ `$PI_CODING_AGENT_DIR/extensions/subagent-question → patterns/subagent-question` loads; both `subagent` and `ask_user` register |
 | 16 | all | API compatibility with 1.1.0 | ✅ every frontmatter tool name (`read, grep, find, ls, write, edit, bash`) is a real builtin; `ctx.hasUI` / `ctx.ui.input(title, placeholder)` exist; all CLI flags used exist; `subagent-question/index.ts` is the stock 1.1.0 example plus an additive `ask_user` tool (37 lines), `agents.ts` byte-identical |
+| 17 | `subagent-question` | `ask_user` human loop (automated) | ✅ driven over RPC by [verify/interactive.mjs](verify/interactive.mjs): the dialog fires, the scripted answer returns (`ANSWER: blue`), and the `delegator → asker` chain completes |
+| 18 | `nested-subagents` | project-agent approval (automated) | ✅ same harness: the `Run project-local agents?` confirm fires; accept → chain runs (`orchestrator received: delegator received: hello`), decline → `Canceled: project-local agents not approved.` |
 
-## Manual checks (not automatable headless)
+## Manual checks
 
-- **`subagent-question` full human loop** — `ask_user` needs a UI, so steps "questions reach you → you type answers → re-invoke with `PREVIOUS ANSWERS`" must be run in the TUI. The ripple itself (row 13) and the graceful headless error (row 14) are verified.
-- **Interactive project-agent approval** — in the TUI, pi asks `Run project-local agents?` once before using `.pi/agents/`. Headless runs skip it (`ctx.hasUI` is false), which is why these tests needed no `--approve`.
+Both former TUI-only checks are now automated with [verify/interactive.mjs](verify/interactive.mjs), which drives `pi --mode rpc` and answers the `extension_ui_request` dialogs programmatically. Run it with:
+
+```bash
+node verify/interactive.mjs --verbose
+```
+
+Defaults: model `opencode-go/deepseek-v4.1-flash`, `--thinking off`, 180s per prompt — override with `PI_TEST_MODEL` and `PI_VERIFY_TIMEOUT_MS`. It builds a throwaway `PI_CODING_AGENT_DIR` (copies your `auth.json`/`settings.json`) and never touches your real config.
+
+The only thing still not covered by automation is the *look* of the dialogs in the TUI (rendering/keybindings). The underlying protocol — dialogs at depth 0, answers flowing back, accept/decline branches — is what the harness asserts.
 
 ## Findings that changed the docs
 
@@ -49,6 +58,7 @@ Model output is not deterministic: wording varies between runs, the *structure* 
    `--exclude-tools subagent` *would* hard-block it (verified: `NOTOOL`), but the stock extension only ever passes `--tools`, never `-xt`, and agent frontmatter has no field for it. So: the cap reliably stops *accidental* delegation and keeps leaf prompts honest; it is not a security boundary against a leaf that has `bash`.
 5. **`--tools` does filter extension tools** (contrary to what row 3's first appearance suggested): a direct probe with `--tools bash` and the extension loaded replies `NOTOOL`.
 6. **`neutral-research` needs its work dir inside the target repo.** Workers investigate pi's working directory; with the work dir in `/tmp` and pi started in the pattern folder, `research.md` came back citing only `questions.md:1…4`. Run from the repo you want researched (READMEs updated).
+7. **The subagent tool's own confirm needs an untrusted project.** In RPC/headless mode there is no interactive trust prompt, so `ctx.isProjectTrusted()` is true and the `Run project-local agents?` confirm is skipped (the chain runs without asking). Pass `--no-approve` to force the untrusted path — which is what the approval test (row 18) does. In the TUI you would see pi's project-trust prompt first, and approving it likewise skips the subagent confirm.
 
 ## Reproduce
 
