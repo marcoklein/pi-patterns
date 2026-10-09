@@ -1,3 +1,9 @@
 node_modules/
 *.log
 .DS_Store
+
+# demo run artifacts (patterns write these while you try them)
+docs/research/
+docs/hitd/
+haiku.md
+.subagent-runs/
