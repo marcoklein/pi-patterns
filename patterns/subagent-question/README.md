@@ -2,8 +2,8 @@
 
 Subagents ask questions, and those questions **ripple up** through nested levels to the orchestrator, where a **human answers** (human-in-the-loop at depth 0). Answers flow back down and the subagent continues.
 
-- `subagent` tool — copied **verbatim** from Pi's built-in subagent extension (delegation).
-- `ask_user` tool — a small addition that prompts the human at depth 0 (via `ctx.ui.input`).
+- `subagent` tool — copied **verbatim** from pi 1.1.0's bundled subagent extension (delegation).
+- `ask_user` tool — a small *additive* change that prompts the human at depth 0 (via `ctx.ui.input`); the rest of `index.ts` is byte-identical to the stock example.
 - Agent definitions carry the question/answer protocol in their prompts and control depth via `tools:`.
 
 ```
@@ -14,22 +14,24 @@ depth 0:  you ◀── ask_user ──▶ orchestrator ──subagent──▶ 
                                            orchestrator ◀───┘
 ```
 
-## Install
+## Install (once)
+
+This pattern ships its **own** extension, so install that one — not pi's stock `subagent` (both register a tool named `subagent`). Nesting needs it at user scope: children are spawned without `-e` (see the [repo README](../../README.md#read-this-once-why-nesting-needs-an-install)).
+
+From this folder:
 
 ```bash
-# extension (a directory with index.ts + agents.ts)
-mkdir -p ~/.pi/agent/extensions
-ln -sfn "$PWD" ~/.pi/agent/extensions/subagent-question
-
-# agents — standard agent definitions
-mkdir -p ~/.pi/agent/agents
-ln -sfn "$PWD/agents/asker.md" ~/.pi/agent/agents/asker.md
-ln -sfn "$PWD/agents/delegator.md" ~/.pi/agent/agents/delegator.md
+agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+mkdir -p "$agent_dir/extensions"
+ln -sfn "$PWD" "$agent_dir/extensions/subagent-question"   # a directory with index.ts + agents.ts
+../../install.sh --no-extension --agents subagent-question # asker.md, delegator.md at user scope
 ```
+
+Agents live in [`.pi/agents/`](.pi/agents/), so instead of installing them you can also run pi inside this folder and pass `agentScope: "both"`.
 
 ## The loop (human in the loop)
 
-Run interactively (`pi` TUI):
+`ask_user` needs a UI, so the full loop is **interactive-only** — run the pi TUI:
 
 ```
 Use the subagent tool with agent "delegator" and task "design an auth system with password hashing and token encryption".
@@ -42,6 +44,8 @@ Use the subagent tool with agent "delegator" and task "design an auth system wit
 
 Repeat until `asker` has enough to finish — you are in the loop at every round, but always at depth 0.
 
+Headless (`-p`) runs cannot do the human part: `ask_user` returns `Error: ask_user needs an interactive session (no UI available).` The ripple itself still works headlessly, which is how it is verified in [VERIFIED.md](../../VERIFIED.md).
+
 ### Depth 1 (no middle agent)
 
 ```
@@ -52,7 +56,7 @@ Use the subagent tool with agent "asker" and task "plan a database schema for a 
 
 ## How it works
 
-- `index.ts` + `agents.ts` are Pi's subagent example, copied as-is. `index.ts` adds one small tool, `ask_user`, which calls `ctx.ui.input()`.
+- `index.ts` + `agents.ts` are pi 1.1.0's subagent example, copied as-is. `index.ts` adds one small tool, `ask_user`, which calls `ctx.ui.input()`.
 - Subagents run headless (`--mode json -p --no-session`, stdin ignored), so they cannot use `ask_user` — only the top-level session has a UI. This is what forces questions to ripple up instead of being asked in place.
 - The ripple is just each agent's final text being relayed to its parent by the stock `subagent` tool. Answers flow down by re-running with a `PREVIOUS ANSWERS:` block in the task (stateless — see caveat below).
 - `tools:` frontmatter is the structural depth cap: `asker` has no `subagent`, so it cannot delegate; `delegator` has only `subagent`.
@@ -68,12 +72,17 @@ Use the subagent tool with agent "asker" and task "plan a database schema for a 
 ---
 name: my-agent
 description: what it does
-tools: subagent, ask_user   # omit "subagent" to make a hard leaf
+tools: subagent, ask_user   # omit "subagent" so the agent cannot delegate
 ---
 
 System prompt here — put the question/answer protocol here.
 ```
 
 - A leaf that only asks: list its working tools (`read, bash, …`) but **omit `subagent`**.
-- A relay/mid-level: `tools: subagent`, prompt says "delegate, then relay the result."
+- A relay/mid-level: `tools: subagent`, prompt says "delegate, then relay the result." If it delegates to a project-local agent, tell it to pass `agentScope: "both"`.
 - `ask_user` is only meaningful at depth 0 (headless subagents get no UI).
+- Omitting `subagent` removes the tool, it is not a sandbox — a leaf with `bash` can still spawn `pi` (see [VERIFIED.md](../../VERIFIED.md), Finding 4).
+
+## Verified
+
+On pi 1.1.0: the two-level ripple (`delegator` → `asker` → questions back at depth 0), the graceful headless `ask_user` error, and loading this pattern's own extension from a symlinked directory — [VERIFIED.md](../../VERIFIED.md), rows 13–15. The human-typing half of the loop needs a TUI and is listed there as a manual check.
