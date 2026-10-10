@@ -2,6 +2,25 @@
 
 Small, self-contained [pi](https://github.com/earendil-works/pi) patterns: delegation depth, goal-blind research, human approval gates, resumable children, questions that ripple up. Each pattern is a folder you can run, read, and verify in a few minutes — no package, no build, no dependencies.
 
+## Repository structure
+
+```
+patterns/<name>/          # one self-contained pattern
+  .pi/agents/*.md         #   agent definitions (project-local patterns)
+  index.ts (+ agents.ts)  #   extension code (self-contained-extension patterns)
+  README.md               #   how to run it
+  verify.mjs              #   its test (the only file that reaches outside the folder)
+shared/rpc.mjs            # the ONLY shared code: verification driver (RPC + JSON + setup)
+install.sh                # installs the subagent extension + reusable agents at user scope
+```
+
+The intent, in two invariants:
+
+1. **A pattern folder is self-contained.** Everything the pattern *needs to run* lives in the folder — its runtime imports nothing from outside it. Copy `patterns/<name>/` anywhere and it works. This is what lets you **mix and match**: load any set of patterns into one pi session (via `install.sh --agents …`, or `pi -e <pattern>/index.ts`) without pulling in unrelated files.
+2. **Only the test reaches into `shared/`.** `verify.mjs` imports `../../shared/rpc.mjs`; the pattern's own files never do. `shared/` is verification plumbing (RPC dialog driver, one-shot JSON runner, throwaway agent-dir setup), not part of any pattern.
+
+The repo is deliberately just a collection: patterns know about each other only through their READMEs (`hitd-machine` composes `neutral-research`, both build on `nested-subagents`), never through imports.
+
 ## Requirements
 
 - pi ≥ 1.1.0 on `PATH`, with a working model/auth (`pi` should start normally).
