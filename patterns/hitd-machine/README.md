@@ -45,9 +45,10 @@ Drive one task through the machine, work dir e.g. `docs/hitd/demo`:
    → `REFUSED: design not approved — a human must edit design.md`.
 5. Edit `design.md` yourself: `approval: approved`. Re-invoke `implementer` → implementation plus `result.md` with test evidence.
 
-Depth is capped as in [nested-subagents](../nested-subagents): `designer` and `implementer` have no `subagent` tool. Note what that means — the cap stops accidental delegation, it is not a sandbox (a leaf with `bash` can spawn pi itself; see [VERIFIED.md](../../VERIFIED.md), Finding 4). The gate that actually holds here is the **sentinel**: `implementer` reads `design.md` and refuses unless a human wrote `approval: approved` — verified both ways (rows 11–12).
+Depth is capped as in [nested-subagents](../nested-subagents): `designer` and `implementer` have no `subagent` tool. Note what that means — the cap stops accidental delegation, it is not a sandbox (a leaf with `bash` can spawn pi itself; see [nested-subagents](../nested-subagents/README.md#what-the-cap-does-and-does-not-guarantee)). The gate that actually holds here is the **sentinel**: `implementer` reads `design.md` and refuses unless a human wrote `approval: approved` — verified both ways.
 
-Verified end-to-end on pi 1.1.0: both refusals, the `approval: pending` → `approved` flip, and a real implementation landing with `result.md` evidence — see [VERIFIED.md](../../VERIFIED.md), rows 8–12.
+Verified end-to-end on pi 1.1.0: both refusals, the `approval: pending` → `approved` flip, and a real implementation landing with `result.md` evidence
+
 
 ## Verify it
 
@@ -55,4 +56,4 @@ Verified end-to-end on pi 1.1.0: both refusals, the `approval: pending` → `app
 node verify.mjs --verbose
 ```
 
-Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.
+Uses the shared driver in `../../shared/rpc.mjs`; runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`), 180s per prompt — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Never touches your config (throwaway `PI_CODING_AGENT_DIR`).

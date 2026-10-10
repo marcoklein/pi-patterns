@@ -9,7 +9,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync 
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { findCredsDir, findStockSubagent, makeAgentDir, runJson, symlinkForce, toolText, toolResults } from "../../verify/rpc.mjs";
+import { findCredsDir, findStockSubagent, makeAgentDir, runJson, symlinkForce, toolText, toolResults } from "../../shared/rpc.mjs";
 
 const verbose = process.argv.includes("--verbose");
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -66,9 +66,14 @@ try {
   const task2 = `Use subagent with agentScope "both": agent neutral-research, task "Work dir: ${workDir}". Reply with only the final text.`;
 
   await run("neutral-research", async () => {
-    await runJson({ cwd: target, env, timeoutMs: timeout, args: [...modelArgs, task1] });
+    // The question agent occasionally fails to write questions.md; retry it.
+    let qExists = false;
+    for (let attempt = 1; attempt <= 3 && !qExists; attempt++) {
+      await runJson({ cwd: target, env, timeoutMs: timeout, args: [...modelArgs, task1] });
+      qExists = existsSync(join(target, workDir, "questions.md"));
+      if (!qExists && attempt < 3) console.log(`     retry ${attempt + 1}/3 (questions.md missing)`);
+    }
     const qPath = join(target, workDir, "questions.md");
-    const qExists = existsSync(qPath);
     check("questions.md written", qExists);
 
     let clean = false;

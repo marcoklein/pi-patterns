@@ -1,8 +1,6 @@
 # pi-patterns
 
-Small, self-contained [pi](https://github.com/earendil-works/pi) patterns: delegation depth, goal-blind research, human approval gates, resumable children, questions that ripple up. Each pattern is a folder you can run and read in a few minutes — no package, no build, no dependencies.
-
-Verified against **pi 1.1.0** (see [VERIFIED.md](VERIFIED.md)).
+Small, self-contained [pi](https://github.com/earendil-works/pi) patterns: delegation depth, goal-blind research, human approval gates, resumable children, questions that ripple up. Each pattern is a folder you can run, read, and verify in a few minutes — no package, no build, no dependencies.
 
 ## Requirements
 
@@ -35,11 +33,11 @@ Only a **user-scope** extension (`$PI_CODING_AGENT_DIR/extensions/subagent/`) is
 
 Depth is always capped the same way: an agent whose frontmatter `tools:` omits `subagent` gets no `subagent` tool, so it cannot delegate by accident.
 
-**That cap is tool-level, not a sandbox.** A leaf that has `bash` can spawn `pi` itself and delegate anyway — observed with `worker` in [VERIFIED.md](VERIFIED.md#findings-that-changed-the-docs) (Finding 4). `--exclude-tools subagent` would hard-block it, but the stock extension only passes `--tools`. Treat the cap as *intent enforcement*, and keep secrets out of leaf reach if you need more than that.
+**That cap is tool-level, not a sandbox.** A leaf that has `bash` can spawn `pi` itself and delegate anyway — observed with `worker` (see [nested-subagents](patterns/nested-subagents/README.md#what-the-cap-does-and-does-not-guarantee)). `--exclude-tools subagent` would hard-block it, but the stock extension only passes `--tools`. Treat the cap as *intent enforcement*, and keep secrets out of leaf reach if you need more than that.
 
 Interactive runs ask `Run project-local agents?` once before using `.pi/agents/` (repo-controlled prompts); headless `-p` runs skip the prompt.
 
-Everything above was measured, not assumed: [VERIFIED.md](VERIFIED.md) lists 16 checks with commands and observed output, plus 6 findings that changed these docs.
+Everything above was measured, not assumed — each pattern's `verify.mjs` encodes the check.
 
 ## Patterns
 
@@ -69,13 +67,17 @@ Subagents ask questions that ripple up through nested levels to your session, wh
 
 ## Verification
 
-Every pattern ships its own check — run it from inside the pattern folder:
+Each pattern carries its own test next to it (`patterns/<name>/verify.mjs`), which imports the shared driver in [`shared/rpc.mjs`](shared/rpc.mjs). The pattern *runtime* stays self-contained — only the test imports shared code.
 
 ```bash
-cd patterns/<pattern> && node verify.mjs --verbose
+cd patterns/nested-subagents && node verify.mjs --verbose
+cd patterns/subagent-question && node verify.mjs --verbose
+cd patterns/resumable-subagents && node verify.mjs --verbose
+cd patterns/neutral-research && node verify.mjs --verbose
+cd patterns/hitd-machine && node verify.mjs --verbose
 ```
 
-The interactive parts (the `ask_user` human loop and the project-agent approval prompt) are driven over pi's RPC protocol by the same scripts. The shared driver is [verify/rpc.mjs](verify/rpc.mjs); recorded results and environment live in [VERIFIED.md](VERIFIED.md).
+The interactive parts (the `ask_user` human loop and the project-agent approval prompt) are driven over pi's RPC protocol. Defaults: model `opencode-go/deepseek-v4.1-flash`, `--thinking off`, 180s per prompt — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`.
 
 ## License
 

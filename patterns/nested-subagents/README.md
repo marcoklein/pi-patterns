@@ -31,7 +31,7 @@ Then:
 Use the subagent tool with agentScope "both" to run agent orchestrator with task 'echo hello'
 ```
 
-Interactive runs ask `Run project-local agents?` once — accept. Expect:
+Interactive runs ask `Run project-local agents?` once — accept. (Headless/RPC runs skip that prompt: there is no interactive trust prompt, so `isProjectTrusted()` is true and the confirm does not fire. Pass `--no-approve` to force it — which is exactly what `verify.mjs` does.) Expect:
 
 ```
 orchestrator received: delegator received: hello
@@ -47,7 +47,7 @@ Then try delegating *from* `worker`: it has no `subagent` tool, so it cannot del
 
 ## What the cap does and does not guarantee
 
-Verified on pi 1.1.0 ([VERIFIED.md](../../VERIFIED.md), rows 2–3):
+Verified on pi 1.1.0 :
 
 - **Holds:** the child's declared tool list contains only `bash`; asked to call `subagent`, a `--tools bash` session replies `NOTOOL`. `--tools` does filter extension tools.
 - **Does not hold:** the cap is not a sandbox. Asked to delegate, `worker` used `bash` to spawn pi itself and got the answer:
@@ -78,7 +78,8 @@ tools: subagent        # include "subagent" to allow delegation; omit to make a 
 System prompt here. If it delegates, tell it to pass agentScope "both".
 ```
 
-Depth-3 chain, leaf tool filtering and the `bash` escape are all verified on pi 1.1.0 — see [VERIFIED.md](../../VERIFIED.md).
+Depth-3 chain, leaf tool filtering and the `bash` escape are all verified on pi 1.1.0
+
 
 ## Verify it
 
@@ -86,4 +87,4 @@ Depth-3 chain, leaf tool filtering and the `bash` escape are all verified on pi 
 node verify.mjs --verbose
 ```
 
-Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.
+Uses the shared driver in `../../shared/rpc.mjs`; runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`), 180s per prompt — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Never touches your config (throwaway `PI_CODING_AGENT_DIR`).

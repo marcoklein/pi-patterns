@@ -9,7 +9,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync 
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { findCredsDir, makeAgentDir, runJson, toolResults, toolText } from "../../verify/rpc.mjs";
+import { findCredsDir, makeAgentDir, runJson, toolResults, toolText } from "../../shared/rpc.mjs";
 
 const verbose = process.argv.includes("--verbose");
 const pattern = dirname(fileURLToPath(import.meta.url));

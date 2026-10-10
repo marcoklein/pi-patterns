@@ -32,7 +32,8 @@ Runs persist in `.subagent-runs/` (gitignored): `<id>.jsonl` sessions, `<id>.jso
 
 Of pi-subagents' 91k LOC, the machinery HITD actually used was resume + run IDs — both here. Still absent by design: `async`/background runs, fleet UI, watchdog, budgets. For revision-heavy phases (HITD's Design loop), stateless-artifact patterns ([neutral-research](../neutral-research), [hitd-machine](../hitd-machine)) stay the leaner choice: resume *saves re-explaining* but costs a persistent session per child. Depth protection works as elsewhere — `poet` has no `subagent` tool, so it's a hard leaf.
 
-Verified on pi 1.1.0: fresh run → `DRAFT`, `resume <run-id>` → the same child revising from memory — see [VERIFIED.md](../../VERIFIED.md).
+Verified on pi 1.1.0: fresh run → `DRAFT`, `resume <run-id>` → the same child revising from memory
+
 
 ## Verify it
 
@@ -40,4 +41,4 @@ Verified on pi 1.1.0: fresh run → `DRAFT`, `resume <run-id>` → the same chil
 node verify.mjs --verbose
 ```
 
-Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.
+Uses the shared driver in `../../shared/rpc.mjs`; runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`), 180s per prompt — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Never touches your config (throwaway `PI_CODING_AGENT_DIR`).

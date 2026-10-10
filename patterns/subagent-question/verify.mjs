@@ -18,7 +18,7 @@ import {
   toolResults,
   toolText,
   uiRequests,
-} from "../../verify/rpc.mjs";
+} from "../../shared/rpc.mjs";
 
 const verbose = process.argv.includes("--verbose");
 const pattern = dirname(fileURLToPath(import.meta.url));

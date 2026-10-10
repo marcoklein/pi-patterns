@@ -44,7 +44,7 @@ Use the subagent tool with agent "delegator" and task "design an auth system wit
 
 Repeat until `asker` has enough to finish — you are in the loop at every round, but always at depth 0.
 
-Headless (`-p`) runs cannot do the human part: `ask_user` returns `Error: ask_user needs an interactive session (no UI available).` The ripple itself still works headlessly, which is how it is verified in [VERIFIED.md](../../VERIFIED.md).
+Headless (`-p`) runs cannot do the human part: `ask_user` returns `Error: ask_user needs an interactive session (no UI available).` The ripple itself still works headlessly, which is how `verify.mjs` checks it.
 
 ### Depth 1 (no middle agent)
 
@@ -81,11 +81,12 @@ System prompt here — put the question/answer protocol here.
 - A leaf that only asks: list its working tools (`read, bash, …`) but **omit `subagent`**.
 - A relay/mid-level: `tools: subagent`, prompt says "delegate, then relay the result." If it delegates to a project-local agent, tell it to pass `agentScope: "both"`.
 - `ask_user` is only meaningful at depth 0 (headless subagents get no UI).
-- Omitting `subagent` removes the tool, it is not a sandbox — a leaf with `bash` can still spawn `pi` (see [VERIFIED.md](../../VERIFIED.md), Finding 4).
+- Omitting `subagent` removes the tool, it is not a sandbox — a leaf with `bash` can still spawn `pi` (see [nested-subagents](../nested-subagents/README.md#what-the-cap-does-and-does-not-guarantee)).
 
 ## Verified
 
-On pi 1.1.0: the two-level ripple (`delegator` → `asker` → questions back at depth 0), the graceful headless `ask_user` error, and loading this pattern's own extension from a symlinked directory — [VERIFIED.md](../../VERIFIED.md), rows 13–17.
+On pi 1.1.0: the two-level ripple (`delegator` → `asker` → questions back at depth 0), the graceful headless `ask_user` error, and loading this pattern's own extension from a symlinked directory
+
 
 ## Verify it
 
@@ -93,4 +94,4 @@ On pi 1.1.0: the two-level ripple (`delegator` → `asker` → questions back at
 node verify.mjs --verbose
 ```
 
-Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.
+Uses the shared driver in `../../shared/rpc.mjs`; runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`), 180s per prompt — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Never touches your config (throwaway `PI_CODING_AGENT_DIR`).

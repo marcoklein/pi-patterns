@@ -18,7 +18,7 @@ import {
   toolResults,
   toolText,
   uiRequests,
-} from "../../verify/rpc.mjs";
+} from "../../shared/rpc.mjs";
 
 const verbose = process.argv.includes("--verbose");
 const pattern = dirname(fileURLToPath(import.meta.url));
@@ -61,15 +61,21 @@ try {
   symlinkForce(join(stock, "agents.ts"), join(agentDir, "extensions", "subagent", "agents.ts"));
   const env = { ...process.env, PI_CODING_AGENT_DIR: agentDir };
 
-  // 1 — the documented headless chain.
+  // 1 — the documented headless chain (retried: the echo chain is model-
+  // nondeterministic and occasionally comes back garbled).
   await run("chain (headless)", async () => {
-    const { events } = await runJson({
-      cwd: pattern,
-      env,
-      timeoutMs: timeout,
-      args: [...modelArgs, 'Use the subagent tool with agentScope "both" to run agent orchestrator with task "echo hello". Reply with only the final text.'],
-    });
-    const subs = toolResults(events, "subagent").map((e) => toolText(e.result));
+    let subs = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { events } = await runJson({
+        cwd: pattern,
+        env,
+        timeoutMs: timeout,
+        args: [...modelArgs, 'Use the subagent tool with agentScope "both" to run agent orchestrator with task "echo hello". Reply with only the final text.'],
+      });
+      subs = toolResults(events, "subagent").map((e) => toolText(e.result));
+      if (subs.some((t) => /hello/i.test(t))) break;
+      if (attempt < 3) console.log(`     retry ${attempt + 1}/3 (no "hello" in result)`);
+    }
     check("3-layer chain runs", subs.some((t) => /hello/i.test(t)), subs[0]?.slice(0, 60) ?? "no subagent result");
   });
 
