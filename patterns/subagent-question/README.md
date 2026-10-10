@@ -85,4 +85,12 @@ System prompt here — put the question/answer protocol here.
 
 ## Verified
 
-On pi 1.1.0: the two-level ripple (`delegator` → `asker` → questions back at depth 0), the graceful headless `ask_user` error, and loading this pattern's own extension from a symlinked directory — [VERIFIED.md](../../VERIFIED.md), rows 13–15. The human-typing half of the loop needs a TUI and is listed there as a manual check.
+On pi 1.1.0: the two-level ripple (`delegator` → `asker` → questions back at depth 0), the graceful headless `ask_user` error, and loading this pattern's own extension from a symlinked directory — [VERIFIED.md](../../VERIFIED.md), rows 13–17.
+
+## Verify it
+
+```bash
+node verify.mjs --verbose
+```
+
+Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.

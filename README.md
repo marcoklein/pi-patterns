@@ -69,7 +69,13 @@ Subagents ask questions that ripple up through nested levels to your session, wh
 
 ## Verification
 
-[VERIFIED.md](VERIFIED.md) records, per pattern: the exact command run, the observed output, and the environment (pi version, model, date). The interactive checks (the `ask_user` human loop and the project-agent approval prompt) are automated over pi's RPC protocol — run `node verify/interactive.mjs --verbose` (see [verify/](verify/)).
+Every pattern ships its own check — run it from inside the pattern folder:
+
+```bash
+cd patterns/<pattern> && node verify.mjs --verbose
+```
+
+The interactive parts (the `ask_user` human loop and the project-agent approval prompt) are driven over pi's RPC protocol by the same scripts. The shared driver is [verify/rpc.mjs](verify/rpc.mjs); recorded results and environment live in [VERIFIED.md](VERIFIED.md).
 
 ## License
 

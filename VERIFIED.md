@@ -30,18 +30,18 @@ Model output is not deterministic: wording varies between runs, the *structure* 
 | 14 | `subagent-question` | `ask_user` headless | ✅ `Error: ask_user needs an interactive session (no UI available).` (as its Caveats state) |
 | 15 | `subagent-question` | own extension as a symlinked dir | ✅ `$PI_CODING_AGENT_DIR/extensions/subagent-question → patterns/subagent-question` loads; both `subagent` and `ask_user` register |
 | 16 | all | API compatibility with 1.1.0 | ✅ every frontmatter tool name (`read, grep, find, ls, write, edit, bash`) is a real builtin; `ctx.hasUI` / `ctx.ui.input(title, placeholder)` exist; all CLI flags used exist; `subagent-question/index.ts` is the stock 1.1.0 example plus an additive `ask_user` tool (37 lines), `agents.ts` byte-identical |
-| 17 | `subagent-question` | `ask_user` human loop (automated) | ✅ driven over RPC by [verify/interactive.mjs](verify/interactive.mjs): the dialog fires, the scripted answer returns (`ANSWER: blue`), and the `delegator → asker` chain completes |
-| 18 | `nested-subagents` | project-agent approval (automated) | ✅ same harness: the `Run project-local agents?` confirm fires; accept → chain runs (`orchestrator received: delegator received: hello`), decline → `Canceled: project-local agents not approved.` |
+| 17 | `subagent-question` | `ask_user` human loop (automated) | ✅ driven over RPC by [verify.mjs](patterns/subagent-question/verify.mjs): the dialog fires, the scripted answer returns (`ANSWER: blue`), and the `delegator → asker` chain completes |
+| 18 | `nested-subagents` | project-agent approval (automated) | ✅ [verify.mjs](patterns/nested-subagents/verify.mjs): the `Run project-local agents?` confirm fires; accept → chain runs, decline → `Canceled: project-local agents not approved.` |
 
 ## Manual checks
 
-Both former TUI-only checks are now automated with [verify/interactive.mjs](verify/interactive.mjs), which drives `pi --mode rpc` and answers the `extension_ui_request` dialogs programmatically. Run it with:
+Each pattern ships a `verify.mjs`; run it from inside the pattern folder:
 
 ```bash
-node verify/interactive.mjs --verbose
+cd patterns/<pattern> && node verify.mjs --verbose
 ```
 
-Defaults: model `opencode-go/deepseek-v4.1-flash`, `--thinking off`, 180s per prompt — override with `PI_TEST_MODEL` and `PI_VERIFY_TIMEOUT_MS`. It builds a throwaway `PI_CODING_AGENT_DIR` (copies your `auth.json`/`settings.json`) and never touches your real config.
+The interactive checks (rows 17–18) are driven over `pi --mode rpc`, which exposes `ctx.ui` dialogs as `extension_ui_request` records that the harness answers programmatically. Defaults: model `opencode-go/deepseek-v4.1-flash`, `--thinking off`, 180s per prompt — override with `PI_TEST_MODEL` and `PI_VERIFY_TIMEOUT_MS`. Every script builds a throwaway `PI_CODING_AGENT_DIR` (copies your `auth.json`/`settings.json`) and never touches your real config.
 
 The only thing still not covered by automation is the *look* of the dialogs in the TUI (rendering/keybindings). The underlying protocol — dialogs at depth 0, answers flowing back, accept/decline branches — is what the harness asserts.
 

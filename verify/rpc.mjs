@@ -6,7 +6,8 @@
 // subprotocol either. The raw RPC wire protocol does, and it exercises the
 // real CLI + extensions + child spawning that the patterns rely on.
 //
-// Usage: see verify/interactive.mjs (the actual tests). No dependencies.
+// Usage: imported by each pattern's own verify.mjs (patterns/<name>/verify.mjs).
+// No dependencies.
 import { spawn } from "node:child_process";
 import { execFileSync } from "node:child_process";
 import { StringDecoder } from "node:string_decoder";
@@ -231,4 +232,48 @@ export function symlinkForce(target, link) {
   } catch (e) {
     if (e.code !== "EEXIST") throw e;
   }
+}
+
+// ---------------------------------------------------------------------------
+// One-shot JSON-mode run (for the non-interactive patterns)
+// ---------------------------------------------------------------------------
+
+/**
+ * Run `pi --mode json -p --no-session <args...>` to completion and return the
+ * parsed event stream. The trailing prompt goes in `args` as the last entry.
+ */
+export function runJson({ cwd, env, args = [], timeoutMs = 300_000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(process.env.PI_BIN || "pi", ["--mode", "json", "-p", "--no-session", ...args], {
+      cwd,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const dec = new StringDecoder("utf8");
+    let buf = "";
+    let stderr = "";
+    const events = [];
+    proc.stderr.on("data", (d) => (stderr += d.toString()));
+    proc.stdout.on("data", (c) => {
+      buf += dec.write(c);
+      let i;
+      while ((i = buf.indexOf("\n")) !== -1) {
+        const line = buf.slice(0, i).replace(/\r$/, "");
+        buf = buf.slice(i + 1);
+        try {
+          events.push(JSON.parse(line));
+        } catch {
+          /* ignore partial/non-JSON lines */
+        }
+      }
+    });
+    const timer = setTimeout(() => {
+      proc.kill("SIGKILL");
+      reject(new Error(`json run timed out (${timeoutMs}ms)\nstderr: ${stderr.slice(-2000)}`));
+    }, timeoutMs);
+    proc.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ events, code, stderr });
+    });
+  });
 }

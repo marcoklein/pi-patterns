@@ -60,3 +60,11 @@ Enforcement is layered: stateless headless processes (context cannot leak via hi
 Be precise about what is enforced: the *goal* never reaches the researchers because nothing passes it (separate stateless processes, minimal handoffs, refusal rules) — not because the workers lack tools. A worker has `bash`, so it could in principle snoop for `task.md`; that is prompt-blocked and detectable, which is why step 1's audit and step 3's grep are part of the pattern rather than optional polish.
 
 Verified end-to-end on pi 1.1.0 — goal-blind questions (`CLEAN` contamination grep), worker fan-out, and `research.md` citing real `index.ts:106-117`-style locations — see [VERIFIED.md](../../VERIFIED.md), rows 6–7.
+
+## Verify it
+
+```bash
+node verify.mjs --verbose
+```
+
+Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.

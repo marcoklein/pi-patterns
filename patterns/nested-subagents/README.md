@@ -79,3 +79,11 @@ System prompt here. If it delegates, tell it to pass agentScope "both".
 ```
 
 Depth-3 chain, leaf tool filtering and the `bash` escape are all verified on pi 1.1.0 — see [VERIFIED.md](../../VERIFIED.md).
+
+## Verify it
+
+```bash
+node verify.mjs --verbose
+```
+
+Runs on `opencode-go/deepseek-v4.1-flash` (`--thinking off`) with 180s per prompt by default — override `PI_TEST_MODEL` / `PI_VERIFY_TIMEOUT_MS`. Uses a throwaway `PI_CODING_AGENT_DIR` and never touches your config.
